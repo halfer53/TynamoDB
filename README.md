@@ -50,7 +50,7 @@ Read request will randomly select one of the nodes in a round robin algorithms.
 
 The client will receive the correct and consistent data from either slaves or master.
 
-### Scenario 2: Data is inconsistent while Raft is the middle of recovering from failures
+### Scenario 2: Data is inconsistent while Raft is the middle of updating value or recovering from failures
 
 When the minority of the servers fail, client read request could either land on master or slave.
 
