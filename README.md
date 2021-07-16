@@ -8,9 +8,9 @@ TynamoDB is mainly implemented based on [TinyKV](https://github.com/tidb-incubat
 
 **Highly Available**: build a fault tolerant KV server on top of Raft which is a distributed consensus algorithm so that the service will remain operational even when the minority of the servers fail.
 
-**Eventual Consistency**: Logs are stored in the master, and replayed in order in the slaves. Every write request will wait until the majority of the servers to commit the write message before replying back to the client to ensure consistency.
+**Eventual Consistency**: Logs are stored in the master and replayed in order in the slaves. Every write request will wait until most of the servers to commit the write message before replying back to the client to ensure consistency.
 
-# Fulat Tolerance
+# Fault Tolerance
 
 A replicated state machine implements fault tolerance by storing copies of its data on the remaining servers/nodes. By storing copies of data on multiple servers, the replicate state machine can continue to operate even if the minority of the servers fail, either due to server or network failures. 
 
@@ -20,7 +20,7 @@ Making a distributed system behave like a coherent unit in face of these failure
 
 To be able to cope with failure, Raft requires majority of the servers to be available. For instance, 2 servers must be available in a replica group of 3 servers. In a 5-server replica group, at least 3 server have to be available. 
 
-The following diagram demonstrate a sample 3-server replica group implementation in TynamoDB. Requests come into raft layer first. Then data are replicated across other servers and persisteted through [Badger](https://github.com/dgraph-io/badger). If one of the server fails, the data can still be recovered from the remaining two servers.
+The following diagram demonstrate a sample 3-server replica group implementation in TynamoDB. Requests come into raft layer first. Then data are replicated across other servers and persisted through [Badger](https://github.com/dgraph-io/badger). If one of the servers fails, the data can still be recovered from the remaining two servers.
 
 ![raft](demo/raft_badger.png)
 
@@ -46,17 +46,17 @@ TynamoDB achieves eventual consistency by allowing the client to read from all s
 The following flow demonstrate what a read request might look like in **TynamoDB**
 
 ### Scenario 1: Data is present and consistent across all replicas
-Read request will randomly select one of the node in a round robin algorithms.
+Read request will randomly select one of the nodes in a round robin algorithms.
 
 The client will receive the correct and consistent data from either slaves or master.
 
 ### Scenario 2: Data is inconsistent while Raft is the middle of recovering from failures
 
-When the minority of the servers fail, client read request could either land on master or slave
+When the minority of the servers fail, client read request could either land on master or slave.
 
-**Master**: if the read request hit master when Raft is recovering from failure, the read request will wait until master replicate all of the logs/states in order in all slaves. In this case, read request may timeout few times before master replay all states in order.
+**Master**: if the read request hit master when Raft is recovering from failure, the read request will wait until master replicate all the logs/states in order in all slaves. In this case, read request may timeout few times before master replay all states in order.
 
-**Slave**: if the read request hit slave when Raft is recovering from failure, the slave would return its local copy of the data back to client. This data maybe outdated version of the data. Read request should return immediately in this case
+**Slave**: if the read request hit slave when Raft is recovering from failure, the slave would return its local copy of the data back to client. This data maybe outdated version of the data. Read request should return immediately in this case.
 
 ### Scenario 3: Data is present on master but not in slave
 
@@ -64,7 +64,7 @@ This scenario happens when a new data has just been written to master but has no
 
 **Master**: In this case, master should be able to return its local copy back to the client.
 
-**Slave**: Since slave hasn't yet received copy from master, slave will return `KeyNotFound` error back to the client.
+**Slave**: Since slave has not yet received copy from master, slave will return `KeyNotFound` error back to the client.
 
 
 
