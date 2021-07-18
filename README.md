@@ -62,9 +62,9 @@ When the minority of the servers fail, client read request could either land on 
 
 This scenario happens when a new data has just been written to master but has not yet been replicated to all the slaves.
 
-**Master**: In this case, master should be able to return its local copy back to the client.
+**Master**: In this case, master should be able to return its local copy back to the client provided data is replicated to the majority of the server
 
-**Slave**: Since slave has not yet received copy from master, slave will return `KeyNotFound` error back to the client.
+**Slave**: Since slave has not yet received copy from master, or slave failed to store the state from master, slave will return `KeyNotFound` error back to the client.
 
 
 
